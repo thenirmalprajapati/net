@@ -231,3 +231,62 @@ RowUpdating
             Bind_ddlCity();
         }
     }
+
+//login using admin database
+using System;
+using System.Data;
+using System.Data.SqlClient;
+using System.Configuration;
+
+public partial class Login : System.Web.UI.Page
+{
+    protected void Page_Load(object sender, EventArgs e)
+    {
+        // Check if the user is already logged in
+        if (Session["Username"] != null)
+        {
+            Response.Redirect("Dashboard.aspx");
+        }
+    }
+
+    protected void btnLogin_Click(object sender, EventArgs e)
+    {
+        string username = txtUsername.Text.Trim();
+        string password = txtPassword.Text.Trim();
+
+        // Validate the credentials
+        if (ValidateCredentials(username, password))
+        {
+            // Store the username in the session
+            Session["Username"] = username;
+
+            // Redirect to the dashboard or main system page
+            Response.Redirect("Dashboard.aspx");
+        }
+        else
+        {
+            lblError.Visible = true;
+            lblError.Text = "Invalid username or password.";
+        }
+    }
+
+    private bool ValidateCredentials(string username, string password)
+    {
+        // Query the database to check if the username and password are correct
+        string connectionString = ConfigurationManager.ConnectionStrings["YourConnectionString"].ConnectionString;
+        using (SqlConnection connection = new SqlConnection(connectionString))
+        {
+            string query = "SELECT COUNT(*) FROM Admin WHERE Username = @Username AND Password = @Password";
+            using (SqlCommand command = new SqlCommand(query, connection))
+            {
+                command.Parameters.AddWithValue("@Username", username);
+                command.Parameters.AddWithValue("@Password", password);
+
+                connection.Open();
+                int count = Convert.ToInt32(command.ExecuteScalar());
+                return (count > 0);
+            }
+        }
+    }
+}
+
