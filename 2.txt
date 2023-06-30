@@ -1,0 +1,233 @@
+CREATE TABLE Registration
+(
+    ID INT IDENTITY(1,1) PRIMARY KEY,
+    Name NVARCHAR(50) NOT NULL,
+    RollNo NVARCHAR(20) NOT NULL,
+    Email NVARCHAR(50) NOT NULL,
+    PhoneNo NVARCHAR(20) NOT NULL,
+    DOB DATE NOT NULL,
+    Gender NVARCHAR(10) NOT NULL,
+    Course NVARCHAR(MAX) NOT NULL,
+    Password NVARCHAR(50) NOT NULL
+)
+
+
+//insert
+   protected void Button1_Click(object sender, EventArgs e)
+        {
+            SqlConnection con = new SqlConnection(@"Data Source=(LocalDB)\MSSQLLocalDB;AttachDbFilename=""C:\Users\Nirmal Prajapati\Desktop\ASPNETPractice\WebForm\WebForm\App_Data\MyDatabase.mdf"";Integrated Security=True");
+            con.Open();
+            SqlCommand cmd = new SqlCommand("INSERT INTO Registration (Name, RollNo, Email, PhoneNo, DOB, Gender, Course, Password) VALUES (@Name, @RollNo, @Email, @PhoneNo, @DOB, @Gender, @Course, @Password)", con);
+            cmd.Parameters.AddWithValue("@Name", txtName.Text);
+            cmd.Parameters.AddWithValue("@RollNo", txtRollNo.Text);
+            cmd.Parameters.AddWithValue("@Email", txtEmail.Text);
+            cmd.Parameters.AddWithValue("@PhoneNo", txtPhoneNo.Text);
+            cmd.Parameters.AddWithValue("@DOB", Convert.ToDateTime(txtDOB.Text));
+            cmd.Parameters.AddWithValue("@Gender", rdbtGender.SelectedValue);
+            string selectedCourses = string.Empty;
+            foreach (ListItem item in chkCourse.Items)
+            {
+                if (item.Selected)
+                    selectedCourses += item.Value + ",";
+            }
+            cmd.Parameters.AddWithValue("@Course", selectedCourses.TrimEnd(','));
+
+            cmd.Parameters.AddWithValue("@Password", txtPassword.Text);
+
+            cmd.ExecuteNonQuery();
+            con.Close();
+            Response.Redirect("LoginPage.aspx");
+
+
+        }      
+
+//login-session
+ 	protected void Page_Load(object sender, EventArgs e)
+        {
+            Label1.Text = "";
+        }
+
+        protected void Button1_Click(object sender, EventArgs e)
+        {
+            String email = txtMail.Text;
+            String pwd = txtPassword.Text;
+            SqlConnection con = new SqlConnection(@"Data Source=(LocalDB)\MSSQLLocalDB;AttachDbFilename=""C:\Users\Nirmal Prajapati\Desktop\ASPNETPractice\WebForm\WebForm\App_Data\MyDatabase.mdf"";Integrated Security=True");
+            con.Open();
+            String query = "select Name from Registration where Email='" + email + "' and Password='" + pwd + "'";
+            SqlCommand cmd = new SqlCommand(query, con);
+
+            SqlDataReader dr = cmd.ExecuteReader();
+
+            if (dr.Read())
+            {
+
+                Session["Name"] = email;
+                Response.Redirect("Dashboard.aspx");
+            }
+            else
+            {
+                Label1.Text = "Login Details Not Valid Please Try Again.....";
+            }
+            con.Close();
+        }
+
+
+//Dashboard-gridview
+protected void Page_Load(object sender, EventArgs e)
+        {
+            if (!IsPostBack)
+            {
+                gvbind();
+            }
+
+        }
+        SqlConnection con = new SqlConnection(@"Data Source=(LocalDB)\MSSQLLocalDB;AttachDbFilename=""C:\Users\Nirmal Prajapati\Desktop\ASPNETPractice\WebForm\WebForm\App_Data\MyDatabase.mdf"";Integrated Security=True");
+
+        public void gvbind()
+        {
+            String q = "select * from Registration";
+            SqlDataAdapter da = new SqlDataAdapter(q, con);
+            DataTable dt = new DataTable();
+            con.Open();
+            da.Fill(dt);
+            con.Close();
+            if (dt.Rows.Count > 0)
+            {
+                GridView1.DataSource = dt;
+                GridView1.DataBind();
+            }
+
+        }
+
+        protected void GridView1_RowCancelingEdit(object sender, GridViewCancelEditEventArgs e)
+        {
+            GridView1.EditIndex = -1;
+            gvbind();
+        }
+
+        protected void GridView1_RowDeleting(object sender, GridViewDeleteEventArgs e)
+        {
+            int ID = Convert.ToInt16(GridView1.DataKeys[e.RowIndex].Values["ID"].ToString());
+            con.Open();
+            String q = "delete from Registration where ID=@id";
+            SqlCommand cmd = new SqlCommand(q, con);
+            cmd.Parameters.AddWithValue("ID", ID);
+            int a = cmd.ExecuteNonQuery();
+            con.Close();
+            gvbind();
+        }
+
+        protected void GridView1_RowEditing(object sender, GridViewEditEventArgs e)
+        {
+            GridView1.EditIndex = e.NewEditIndex;
+            gvbind();
+
+        }
+
+        protected void GridView1_RowUpdating(object sender, GridViewUpdateEventArgs e)
+        {  
+            
+            TextBox txtName = GridView1.Rows[e.RowIndex].FindControl("txtName") as TextBox;
+            TextBox txtRollNo = GridView1.Rows[e.RowIndex].FindControl("txtRollNo") as TextBox;
+            TextBox txtEmail = GridView1.Rows[e.RowIndex].FindControl("txtEmail") as TextBox;
+            TextBox txtPhoneNo = GridView1.Rows[e.RowIndex].FindControl("txtPhoneNo") as TextBox;
+            RadioButtonList rdbGender = GridView1.Rows[e.RowIndex].FindControl("rdbGender") as RadioButtonList;
+
+
+
+          
+            int ID = Convert.ToInt16(GridView1.DataKeys[e.RowIndex].Values["ID"].ToString());
+            con.Open();
+            String q = "update Registration set Name=@Name,RollNo=@RollNo,Email=@Email,PhoneNo=@PhoneNo,Gender=@Gender where ID=@ID";
+            SqlCommand cmd = new SqlCommand(q,con);
+            cmd.Parameters.AddWithValue("Name",txtName.Text);
+            cmd.Parameters.AddWithValue("RollNo", txtRollNo.Text);
+            cmd.Parameters.AddWithValue("Email", txtEmail.Text);
+            cmd.Parameters.AddWithValue("PhoneNo", txtPhoneNo.Text);
+            cmd.Parameters.AddWithValue("Gender", rdbGender.SelectedValue);  
+            cmd.Parameters.AddWithValue("ID", ID);
+
+            int a = cmd.ExecuteNonQuery();
+            con.Close();
+            GridView1.EditIndex = -1;
+            gvbind();
+        }
+
+//Events
+RowCancelingEdit
+RowDeleting
+RowEditing
+RowUpdating
+
+//Validation
+
+<appSettings>
+	<add key="ValidationSettings:UnobtrusiveValidationMode" value="None"/>
+</appSettings>
+
+
+//ajax
+
+ public partial class Default : System.Web.UI.Page
+    {
+        SqlConnection conn = new SqlConnection(@"Data Source=(LocalDB)\MSSQLLocalDB;Att0achDbFilename="E:\SCET\Sem 2 Subjects and Files\ASP\CountryStateCity\CountryStateCity\App_Data\"; Integrated Security=True");
+        public void Bind_ddlCountry()
+        {
+            conn.Open();
+            SqlCommand cmd = new SqlCommand("select CountryID,CountryName from tblCountry", conn);
+            SqlDataReader dr = cmd.ExecuteReader();
+            ddlcountry.DataSource = dr;
+            ddlcountry.Items.Clear();
+            ddlcountry.Items.Add("--Select--");
+            ddlcountry.DataTextField = "CountryName";
+            ddlcountry.DataValueField = "CountryID";
+            ddlcountry.DataBind();
+            conn.Close();
+
+        }
+
+        public void Bind_ddlState()
+        {
+            conn.Open();
+            SqlCommand cmd = new SqlCommand("select StateID,StateName from tblState where Country_ID='" + ddlcountry.SelectedValue + "'", conn);
+            SqlDataReader dr = cmd.ExecuteReader();
+            ddlstate.DataSource = dr;
+            ddlstate.Items.Clear();
+            ddlstate.Items.Add("--Select--");
+            ddlstate.DataTextField = "StateName";
+            ddlstate.DataValueField = "StateID";
+            ddlstate.DataBind();
+            conn.Close();
+
+        }
+
+        public void Bind_ddlCity()
+        {
+            conn.Open();
+            SqlCommand cmd = new SqlCommand("select CityID,CityName from tblCity where State_ID ='" + ddlstate.SelectedValue + "'", conn);
+            SqlDataReader dr = cmd.ExecuteReader();
+            ddlcity.DataSource = dr;
+            ddlcity.Items.Clear();
+            ddlcity.Items.Add("--Select--");
+            ddlcity.DataTextField = "CityName";
+            ddlcity.DataValueField = "CityID";
+            ddlcity.DataBind();
+            conn.Close();
+        }
+
+        protected void Page_Load(object sender, EventArgs e)
+        {
+            if (!IsPostBack)
+            {
+                Bind_ddlCountry();
+            }
+        }
+        protected void ddlcountry_SelectedIndexChanged(object sender, EventArgs e)
+        {
+            Bind_ddlState();
+        }
+        protected void ddlstate_SelectedIndexChanged(object sender, EventArgs e)
+        {
+            Bind_ddlCity();
+        }
+    }
