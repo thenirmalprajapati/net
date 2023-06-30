@@ -290,3 +290,49 @@ public partial class Login : System.Web.UI.Page
     }
 }
 
+//checklogin or not
+using System;
+
+public partial class Dashboard : System.Web.UI.Page
+{
+    protected void Page_Load(object sender, EventArgs e)
+    {
+        // Check if the user is logged in
+        if (Session["Username"] == null)
+        {
+            // User is not logged in, redirect to the login page
+            Response.Redirect("Login.aspx");
+        }
+        else
+        {
+            // User is logged in, continue loading the dashboard
+            // You can also perform additional actions or load user-specific data here
+
+            // Retrieve the username from the session
+            string username = Session["Username"].ToString();
+
+            // Display a welcome message
+            lblWelcome.Text = "Welcome, " + username + "!";
+        }
+    }
+
+    protected void btnLogout_Click(object sender, EventArgs e)
+    {
+        // Clear the session and redirect to the login page
+        Session.Clear();
+        Session.Abandon();
+        Response.Redirect("Login.aspx");
+    }
+}
+add value to the database
+=========================
+
+cmd.Parameters.AddWithValue("@Name", txtName.Text);
+cmd.Parameters.AddWithValue("@Category", ddlCategory.SelectedValue);
+cmd.Parameters.AddWithValue("@IsActive", chkIsActive.Checked);
+cmd.Parameters.AddWithValue("@Gender", rbMale.Checked ? "Male" : "Female");
+cmd.Parameters.AddWithValue("@DateOfBirth", calDateOfBirth.SelectedDate);
+string selectedOptions = string.Join(",", chkListOptions.Items.Cast<ListItem>().Where(i => i.Selected).Select(i => i.Value));
+cmd.Parameters.AddWithValue("@Options", selectedOptions);
+string selectedOptions = string.Join(",", lstOptions.Items.Cast<ListItem>().Where(i => i.Selected).Select(i => i.Value));
+cmd.Parameters.AddWithValue("@Options", selectedOptions);
